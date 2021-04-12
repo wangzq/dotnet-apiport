@@ -5,7 +5,9 @@ using Autofac;
 using Microsoft.Fx.Portability;
 using Microsoft.Fx.Portability.Reporting;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace ApiPort
@@ -20,7 +22,7 @@ namespace ApiPort
 
         private static void LoadReportWriters(ContainerBuilder builder)
         {
-            foreach (var path in Directory.EnumerateFiles(GetApplicationDirectory(), "Microsoft.Fx.Portability.Reports.*.dll"))
+            foreach (var path in GetReportPlugins(GetApplicationDirectory()))
             {
                 try
                 {
@@ -36,6 +38,25 @@ namespace ApiPort
                 {
                 }
             }
+        }
+
+        private static IEnumerable<string> GetReportPlugins(string directory)
+        {
+            const string prefix = "Microsoft.Fx.Portability.Reports.";
+            var prefixLen = prefix.Length;
+            var files = Directory.EnumerateFiles(directory, prefix + "*.dll").ToArray();
+            return files.Where(f => !IsRazorViewsAssembly(f, files));
+        }
+
+        private static bool IsRazorViewsAssembly(string file, string[] files)
+        {
+            if (file.EndsWith(".views.dll", StringComparison.OrdinalIgnoreCase))
+            {
+                var prefix = file.Substring(0, file.Length - ".views.dll".Length);
+                return files.Any(f => string.Equals(f, prefix + ".dll", StringComparison.OrdinalIgnoreCase));
+            }
+
+            return false;
         }
 
         private static string GetApplicationDirectory()
