@@ -3,10 +3,13 @@
 
 using ApiPort.Resources;
 using Autofac;
+using Autofac.Diagnostics.DotGraph;
+
 using Microsoft.Fx.Portability;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -31,6 +34,21 @@ namespace ApiPort
 
             using (var container = DependencyBuilder.Build(options, productInformation))
             {
+                var tracer = new DotDiagnosticTracer();
+                tracer.OperationCompleted += (s, a) =>
+                {
+                    // Writing the DOT trace to a file will let you render
+                    // it to a graph with Graphviz later, but this is
+                    // NOT A GOOD COPY/PASTE EXAMPLE. You'll want to do
+                    // things in an async fashion with good error handling.
+                    var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dot");
+                    using var file = new StreamWriter(path);
+                    file.WriteLine(a.TraceContent);
+                };
+
+                // Subscribe to the diagnostics with your tracer.
+                container.SubscribeToDiagnostics(tracer);
+
                 var progressReport = container.Resolve<IProgressReporter>();
 
                 try
