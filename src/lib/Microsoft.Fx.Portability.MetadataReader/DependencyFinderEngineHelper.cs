@@ -93,7 +93,9 @@ namespace Microsoft.Fx.Portability.Analyzer
                 }
             }
 
-            if (_reader.MemberReferences.Any())
+            var memRefs = _reader.MemberReferences.ToArray();
+
+            if (memRefs.Length > 0)
             {
                 // Primitives need to have their assembly set, so we search for a
                 // reference to System.Object that is considered a possible
@@ -127,7 +129,8 @@ namespace Microsoft.Fx.Portability.Analyzer
                 }
                 else
                 {
-                    throw new SystemObjectNotFoundException();
+                    // This usually means only having netstandard reference, which is ok to skip
+                    // throw new SystemObjectNotFoundException();
                 }
             }
         }
