@@ -30,10 +30,16 @@ namespace Microsoft.Fx.Portability
         public static AdditionalDataCatalog LoadAdditionalData()
         {
             var catalog = new AdditionalDataCatalog();
+            const string filename = "exceptions.bin";
+            if (!HasResourceFile(filename) && !HasResource(GetResourceName(filename)))
+            {
+                Console.WriteLine("Unable to find exceptions.bin so exceptions will not be included in report.");
+                return catalog;
+            }
 
             try
             {
-                using (var stream = OpenFileOrResource($"exceptions.bin"))
+                using (var stream = OpenFileOrResource(filename))
                 {
                     catalog.Exceptions = stream.DecompressToObject<List<ApiExceptionStorage>>();
                 }
@@ -106,6 +112,12 @@ namespace Microsoft.Fx.Portability
             return null;
         }
 
+        private static bool HasResourceFile(string path) => File.Exists(Path.Combine(GetCurrentDirectoryName(), path));
+
+        private static bool HasResource(string name) => typeof(Data).GetTypeInfo().Assembly.GetManifestResourceNames().Any(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
+
+        private static string GetResourceName(string filename) => "Microsoft.Fx.Portability.Offline.data." + filename;
+
         private static Stream OpenFileOrResource(string path)
         {
             var file = Path.Combine(GetCurrentDirectoryName(), path);
@@ -116,7 +128,7 @@ namespace Microsoft.Fx.Portability
             }
             else
             {
-                var stream = typeof(Data).GetTypeInfo().Assembly.GetManifestResourceStream("Microsoft.Fx.Portability.Offline.data." + path);
+                var stream = typeof(Data).GetTypeInfo().Assembly.GetManifestResourceStream(GetResourceName(path));
 
                 if (stream == null)
                 {
