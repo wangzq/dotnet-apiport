@@ -41,7 +41,7 @@ namespace Microsoft.Fx.Portability
                 .SingleInstance();
 
             builder.RegisterType<TargetNameParser>()
-                .WithParameter(TypedParameter.From(".NET Framework"))
+                .WithParameter(TypedParameter.From(".NET Framework, Version = 4.0"))
                 .As<ITargetNameParser>()
                 .SingleInstance();
 
